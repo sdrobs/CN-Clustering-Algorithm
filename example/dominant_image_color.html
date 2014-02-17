@@ -1,0 +1,138 @@
+<!-- simple variation of algorithm for finding dominant color in an image based off rgb scatterplot -->
+
+<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+<!DOCTYPE html>
+<html>
+    <body>
+        <img id="test1" src="test3.jpg" alt="test1" width="200" height="200">
+        <canvas id="myCanvas" width="200" height="200" style="border:1px solid #d3d3d3;"></canvas>
+        <div id="color" style="width:200px; height: 200px; border: 1px solid #d3d3d3;"></div>
+        <script>
+            var imgData
+            var ctx
+
+            document.getElementById("test1").onload=function(){
+                var c = document.getElementById("myCanvas");
+                
+                ctx = c.getContext("2d");
+                var img = new Image();
+                img.onload = function () {
+                    ctx.drawImage(img, 0, 0, 200, 200);
+                    imgData = ctx.getImageData(0,0,c.width,c.height)
+                    stuff(imgData)
+                }
+                img.src="test3.jpg"
+            }
+
+            function stuff(imgData){
+                var closestPixel = []
+
+                var can = document.getElementById("scatterplot");
+                canctx = c.getContext("2d");
+                canctx.fillStyle = "#f00"
+
+                for (var i = 0; i < imgData.data.length; i += 4){
+                    var r = imgData.data[i]
+                    var g = imgData.data[i+1]
+                    var b = imgData.data[i+2]
+
+                    var leastDist = 9999
+                    var pixel = -1
+
+                    for(var j = i+1; j < imgData.data.length; j += 4){
+                        var r1 = imgData.data[j]
+                        var g1 = imgData.data[j+1]
+                        var b1 = imgData.data[j+2]
+
+                        var dist = Math.sqrt(Math.pow((r1-r),2) + Math.pow((g1-g),2) + Math.pow((b1-b),2))
+                        if(dist < leastDist){
+                            leastDist = dist
+                            pixel = Math.floor(j/4)
+                        }
+                    }
+                    closestPixel.push(pixel)
+                }
+                console.log('ok')
+
+
+                var clusterNum = 0
+                var clusters = []
+                var refdict = {}
+
+                var highestCluster = 0
+                var highestClusterNum = -1
+
+                for(var i = 0; i < closestPixel.length; i++){
+
+                    if(!(closestPixel[i] in refdict)){
+                        clusters.push([closestPixel[i]])
+                        refdict[closestPixel[i]] = clusterNum
+                        clusterNum++
+                    }
+
+                    if(i in refdict){
+                        if(refdict[i] != refdict[closestPixel[i]]){
+                            var tempi = refdict[i] //will be changed by loop, and need it for clusters
+                            var tempcpi = refdict[closestPixel[i]]
+                            var cluster = clusters[tempi]
+
+                            for(var j = 0; j < cluster.length; j++){
+                                clusters[tempcpi].push(cluster[j])
+                                refdict[cluster[j]] = tempcpi
+                            }
+
+                            if(clusters[tempcpi].length > highestCluster){
+                                highestCluster = clusters[tempcpi].length
+                                highestClusterNum = tempcpi
+                            }
+                            
+                            clusters[tempi] = []
+                        }
+                    }
+                    else{
+                        refdict[i] = refdict[closestPixel[i]]
+                        clusters[refdict[closestPixel[i]]].push(i)
+                    }
+                }
+
+                var totR = 0
+                var totG = 0
+                var totB = 0
+                var total = highestCluster
+
+                var cluster = clusters[highestClusterNum]
+
+                var w = document.getElementById("myCanvas").width
+                var h = document.getElementById("myCanvas").height
+                ctx.fillStyle = "#fff"
+                ctx.fillRect(0,0,w,h);
+                ctx.fillStyle = "#f00"
+
+                for(var i = 0; i < cluster.length; i++){
+                    var x = cluster[i] % w
+                    var y = Math.floor(cluster[i] / w)
+                    ctx.fillRect( x, y, 1, 1 );
+
+                    var r = imgData.data[cluster[i] * 4]
+                    var g = imgData.data[cluster[i] * 4 + 1]
+                    var b = imgData.data[cluster[i] * 4 + 2]
+
+                    totR += r
+                    totG += g
+                    totB += b
+                }
+
+                $('#color').css('background-color' , 'rgb('+Math.floor(totR/total)+','+Math.floor(totG/total)+','+Math.floor(totB/total)+')')
+
+            }
+
+            $('#test1').click(function(e){
+                var x = e.pageX - $(this).offset().left
+                var y = e.pageY - $(this).offset().top
+                console.log(y)
+                console.log(x)
+                console.log(imgData)
+            })
+        </script>
+    </body>
+</html>
