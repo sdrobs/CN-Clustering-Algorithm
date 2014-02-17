@@ -5,4 +5,4 @@ JS implementation of a non-classified point clustering algorithm I wrote. See cn
 
 Example implementation, clustering RGB values to find the dominant color range in an image:
 
-![](https://s3-us-west-2.amazonaws.com/sdrobs/download.png)
+![](https://s3-us-west-2.amazonaws.com/sdrobs/download1.png)
